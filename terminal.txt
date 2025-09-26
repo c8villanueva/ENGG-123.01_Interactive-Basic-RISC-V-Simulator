@@ -1,0 +1,5 @@
+to compile:
+g++ -o test.exe Malubag-VIllanueva_Project-2_main.cpp
+
+to run:
+.\test.exe
