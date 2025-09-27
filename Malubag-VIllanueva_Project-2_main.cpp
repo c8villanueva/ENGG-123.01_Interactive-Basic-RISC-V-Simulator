@@ -47,37 +47,62 @@ int main()
       return 0;
     }
 
-    if(command == "HELP")
+    else if(command == "HELP")
     {
-      cout << "\n[commands]\n" << endl;
+      cout << "\nDATA"
+           << "\n1. loaddata <address> <filename> - obtains" 
+           << " hexadecimal strings from <filename> and stores"
+           << " at <address> in memory"
+           << "\n2. showdata <address> <N> - displays <N> lines"
+           << " starting from <address> in memory"
+
+           << "\n\nINSTRUCTIONS"
+           << "\n3. loadcode <address> <filename> - obtains"
+           << " hexadecimal strings from <filename> and stores"
+           << " at <address> in memory"
+           << "\n4. showcode <address> <N> - displays <N> lines"
+           << " starting from <address> in memory"
+
+           << "\n\nEXECUTION"
+           << "\n5. exec <address> - simulates execution of"
+           << " instruction codes starting at specified <address>"
+
+           << "\n\nMISCELLANEOUS"
+           << "\n6. help - displays this message"
+           << "\n7. exit - terminates the program"
+           << endl;
     }
 
-    if(command == "LOADDATA")
+    else if(command == "LOADDATA")
     {
       cout << "loaddata";
     }
 
-    if(command == "SHOWDATA")
+    else if(command == "SHOWDATA")
     {
       cout << "showdata";
     }
 
-    if(command == "LOADCODE")
+    else if(command == "LOADCODE")
     {
       cout << "loadcode";
     }
 
-    if(command == "SHOWCODE")
+    else if(command == "SHOWCODE")
     {
       cout << "showcode";
     }
 
-    if(command == "EXEC")
+    else if(command == "EXEC")
     {
       cout << "exec";
     }
 
-
+    else
+    {
+      cout << "\nERROR: Invalid command."
+           << " Type HELP to display all commands.\n";
+    }
 
     // if(!isValidHex(userInput))
     // {
