@@ -9,6 +9,8 @@
 #include <bitset>
 #include <sstream>
 #include <fstream>
+#include <vector>
+#include <cstdint>
 
 using namespace std;
 
@@ -21,6 +23,161 @@ bool isValidHex(const string &s, int length)
     if(!isxdigit(c)) return false;
   }
   return true;
+}
+
+void loadData(string &address, string &filename, uint8_t * &memory)
+{
+  ifstream file;
+  stringstream ss;
+  string line;
+  unsigned long long addr = stoull(address, nullptr, 16);
+
+  file.open(filename);
+  if(!file.is_open())
+  {
+    cout << "\nERROR: " << filename << " not found." << endl;
+    return;
+  }
+
+  while(getline(file, line))
+  {
+    ss.str(line);
+    string hexStr;
+
+    if(!(ss >> hexStr)) break;
+    if(!isValidHex(hexStr, 16)) break;
+    if(hexStr.empty()) break;
+
+    unsigned long long value = stoull(line, nullptr, 16);
+    
+    for(int i=0; i<8; i++)
+      memory[addr + i] = (value >> (i * 8)) & 0xFF;
+
+    addr += 8;
+  }
+
+  file.close();
+}
+
+void loadCode(string &address, string &filename)
+{
+
+}
+
+void showData(string &address, int N)
+{
+  
+}
+
+void showCode(string &address, int N)
+{
+
+}
+
+//need to update red and mem
+void parseInstruction(unsigned int instruction, long long * &reg, uint8_t * &mem)
+{
+    cout << "\nInstruction: " << bitset<32>(instruction) << "\n\n";
+
+    unsigned int opcode =  instruction & 0x7F;
+    unsigned int rd     = (instruction >> 7)  & 0x1F;
+
+    // R Format
+    unsigned int funct3 = (instruction >> 12) & 0x07;
+    unsigned int rs1    = (instruction >> 15) & 0x1F;
+    unsigned int rs2    = (instruction >> 20) & 0x1F;
+    unsigned int funct7 = (instruction >> 25) & 0x7F;
+
+    // I Format
+    int immediate = (instruction >> 20) & 0xFFF;
+    if (immediate & 0x800) immediate |= 0xFFFFF000;
+
+    // S Format
+    int imm_s = ((instruction >> 7) & 0x1F) | 
+                (((instruction >> 25) & 0x7F) << 5);
+    if (imm_s & 0x800) imm_s |= 0xFFFFF000;
+
+    switch (opcode) {
+      case 0b0110011: // R-type ADD/SUB
+        if (funct3 == 0 && funct7 == 0x00) 
+        { // ADD
+          if (rd == 0) 
+          {
+            cout << "ERROR: Cannot write to x0 (rd = 0)." 
+                  << endl;
+          } 
+          else 
+          {
+            cout << "add x" << rd << ", x" << rs1 << ", x" 
+                  << rs2 << endl;
+          }
+        }
+        if (funct3 == 0 && funct7 == 0x20) 
+        { // SUB
+          if (rd == 0) 
+          {
+            cout << "ERROR: Cannot write to x0 (rd = 0)." << endl;
+          } 
+          else 
+          {
+            cout << "sub x" << rd << ", x" << rs1 << ", x" << rs2 
+                  << endl;
+          }
+        }
+        break;
+
+      case 0b0010011: // I-type ADDI
+        if (funct3 == 0) 
+        {
+          if (rd == 0) 
+          {
+            cout << "ERROR: Cannot write to x0 (rd = 0)." << endl;
+          } 
+          else 
+          {
+            cout << "addi x" << rd << ", x" << rs1 << ", " 
+                  << immediate << endl;
+          }
+        }
+        break;
+
+      case 0b0000011: // I-type LD
+        if (funct3 == 3) 
+        {
+          if (rd == 0) 
+          {
+            cout << "ERROR: Cannot write to x0 (rd = 0)." << endl;
+          } 
+          else 
+          {
+            cout << "ld x" << rd << ", " << immediate 
+                  << "(x" << rs1 << ")" << endl;
+          }
+        }
+        break;
+
+      case 0b0100011: // S-type SD
+        if (funct3 == 3) 
+        {
+          if (rs2 == 0) 
+          {
+            cout << "ERROR: Cannot store from x0 (rs2 = 0)." 
+                  << endl; 
+          } 
+          else 
+          {
+            cout << "sd x" << rs2 << ", " << imm_s 
+                  << "(x" << rs1 << ")" << endl;
+          }
+        }
+        break;
+
+      default:
+        cout << "Unsupported instruction.\n"
+              << "opcode = "   << opcode
+              << "\tfunct3 = " << funct3
+              << "\tfunct7 = " << funct7 << endl;
+    }
 }
 
 int main()
@@ -37,8 +194,13 @@ int main()
   int N = 0;
   ifstream file;
 
-  unsigned long long int *reg = new unsigned long long int [32];
-  for(int i=0; i<32; i++) reg[i] = 0;
+  //32 64-bit registers
+  long long *registers = new long long [32];
+  for(int i=0; i<32; i++) registers[i] = 0;
+
+  //memory
+  const int memory_size = 1024 * 64; // 64 KB
+  uint8_t *memory = new uint8_t [memory_size]; 
   
   while(true)
   {
@@ -53,6 +215,11 @@ int main()
 
     if(command == "EXIT")
     {
+      ss.clear();
+      file.close();
+      delete [] registers;
+      delete [] memory;
+
       cout << "\nProgram has been terminated.\n" << endl;
       return 0;
     }
@@ -89,19 +256,14 @@ int main()
           cout << "\nERROR: Please input an 8-bit hex value for <address>." << endl;
           continue;
         }
-
-        file.open(filename);
-        if(!file)
-        {
-          cout << "\nERROR: " << filename << " not found." << endl;
-          continue;
-        }
-
         else
         {
           cout << "\nLoading " 
                << (command == "LOADDATA" ? "data" : "instructions") 
                << " from " << filename << " to address 0x" << address << endl;
+
+          if(command == "LOADDATA") loadData(address, filename, memory);
+          else if(command == "LOADCODE") loadCode(address, filename);
         }
       }
     }
@@ -126,6 +288,9 @@ int main()
           cout << "\nShowing " 
                << (command == "SHOWDATA" ? "data" : "instructions") 
                << " " << N << " from address 0x" << address << endl;
+
+          if(command == "SHOWDATA") showData(address, N);
+          else if(command == "SHOWCODE") showCode(address, N);
         }
       }      
     }
@@ -140,118 +305,5 @@ int main()
       cout << "\nERROR: Invalid command."
            << " Type HELP to display all commands.\n";
     }
-
-    // if(!isValidHex(userInput))
-    // {
-    //   cout << "ERROR: Please input an 8-bit hex value." << endl;
-    // }
-    // else
-    // {
-    //   unsigned long instruction = stoul(userInput, nullptr, 16);
-    //   cout << "\nInstruction: " << bitset<32>(instruction) << "\n\n";
-
-    //   unsigned int opcode =  instruction & 0x7F;
-    //   unsigned int rd     = (instruction >> 7)  & 0x1F;
-
-    //   // R Format
-    //   unsigned int funct3 = (instruction >> 12) & 0x07;
-    //   unsigned int rs1    = (instruction >> 15) & 0x1F;
-    //   unsigned int rs2    = (instruction >> 20) & 0x1F;
-    //   unsigned int funct7 = (instruction >> 25) & 0x7F;
-
-    //   // I Format
-    //   int immediate = (instruction >> 20) & 0xFFF;
-    //   if (immediate & 0x800) immediate |= 0xFFFFF000;
-
-    //   // S Format
-    //   int imm_s = ((instruction >> 7) & 0x1F) | 
-    //               (((instruction >> 25) & 0x7F) << 5);
-    //   if (imm_s & 0x800) imm_s |= 0xFFFFF000;
-
-    //   switch (opcode) {
-    //     case 0b0110011: // R-type ADD/SUB
-    //       if (funct3 == 0 && funct7 == 0x00) 
-    //       { // ADD
-    //         if (rd == 0) 
-    //         {
-    //           cout << "ERROR: Cannot write to x0 (rd = 0)." 
-    //                << endl;
-    //         } 
-    //         else 
-    //         {
-    //           cout << "add x" << rd << ", x" << rs1 << ", x" 
-    //                << rs2 << endl;
-    //         }
-    //       }
-    //       if (funct3 == 0 && funct7 == 0x20) 
-    //       { // SUB
-    //         if (rd == 0) 
-    //         {
-    //           cout << "ERROR: Cannot write to x0 (rd = 0)." << endl;
-    //         } 
-    //         else 
-    //         {
-    //           cout << "sub x" << rd << ", x" << rs1 << ", x" << rs2 
-    //                << endl;
-    //         }
-    //       }
-    //       break;
-
-    //     case 0b0010011: // I-type ADDI
-    //       if (funct3 == 0) 
-    //       {
-    //         if (rd == 0) 
-    //         {
-    //           cout << "ERROR: Cannot write to x0 (rd = 0)." << endl;
-    //         } 
-    //         else 
-    //         {
-    //           cout << "addi x" << rd << ", x" << rs1 << ", " 
-    //                << immediate << endl;
-    //         }
-    //       }
-    //       break;
-
-    //     case 0b0000011: // I-type LD
-    //       if (funct3 == 3) 
-    //       {
-    //         if (rd == 0) 
-    //         {
-    //           cout << "ERROR: Cannot write to x0 (rd = 0)." << endl;
-    //         } 
-    //         else 
-    //         {
-    //           cout << "ld x" << rd << ", " << immediate 
-    //                << "(x" << rs1 << ")" << endl;
-    //         }
-    //       }
-    //       break;
-
-    //     case 0b0100011: // S-type SD
-    //       if (funct3 == 3) 
-    //       {
-    //         if (rs2 == 0) 
-    //         {
-    //           cout << "ERROR: Cannot store from x0 (rs2 = 0)." 
-    //                << endl; 
-    //         } 
-    //         else 
-    //         {
-    //           cout << "sd x" << rs2 << ", " << imm_s 
-    //                << "(x" << rs1 << ")" << endl;
-    //         }
-    //       }
-    //       break;
-
-    //     default:
-    //       cout << "Unsupported instruction.\n"
-    //            << "opcode = "   << opcode
-    //            << "\tfunct3 = " << funct3
-    //            << "\tfunct7 = " << funct7 << endl;
-    //   }
-    // }
-
-
-
   }
 }
