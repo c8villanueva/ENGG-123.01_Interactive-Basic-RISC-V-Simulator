@@ -12,9 +12,9 @@
 
 using namespace std;
 
-bool isValidHex(const string &s)
+bool isValidHex(const string &s, int length)
 {
-  if(s.length() != 8) return false;
+  if(s.length() != length) return false;
   for(int i=0; i<s.length(); i++)
   {
     char c = s[i];
@@ -26,19 +26,29 @@ bool isValidHex(const string &s)
 int main()
 {
   cout << "\nInteractive Basic RISC-V Simulator"
-       << "\n(Type HELP to display all commands.)"
-       << "\n(Type EXIT to terminate the program.)" << endl;
-  
-  string userInput = "";
+       << "\n(Type \"HELP\" to display all commands.)"
+       << "\n(Type \"EXIT\" to terminate the program.)" << endl;
+
+  stringstream ss;
+  string userInput = "",
+         command = "", 
+         address = "", 
+         filename = "";
+  int N = 0;
+  ifstream file;
+
+  unsigned long long int *reg = new unsigned long long int [32];
+  for(int i=0; i<32; i++) reg[i] = 0;
   
   while(true)
   {
+    ss.clear();
     cout << "\nInput instructions here:\n> ";
     getline(cin, userInput);
     transform(userInput.begin(), userInput.end(), userInput.begin(), 
               [](unsigned char c) {return toupper(c); });
-    stringstream ss(userInput);
-    string command;
+
+    ss.str(userInput);
     ss >> command;
 
     if(command == "EXIT")
@@ -49,48 +59,75 @@ int main()
 
     else if(command == "HELP")
     {
-      cout << "\nDATA"
-           << "\n1. loaddata <address> <filename> - obtains" 
-           << " hexadecimal strings from <filename> and stores"
-           << " at <address> in memory"
-           << "\n2. showdata <address> <N> - displays <N> lines"
-           << " starting from <address> in memory"
-
-           << "\n\nINSTRUCTIONS"
-           << "\n3. loadcode <address> <filename> - obtains"
-           << " hexadecimal strings from <filename> and stores"
-           << " at <address> in memory"
-           << "\n4. showcode <address> <N> - displays <N> lines"
-           << " starting from <address> in memory"
-
-           << "\n\nEXECUTION"
-           << "\n5. exec <address> - simulates execution of"
-           << " instruction codes starting at specified <address>"
-
-           << "\n\nMISCELLANEOUS"
-           << "\n6. help - displays this message"
-           << "\n7. exit - terminates the program"
+      cout << "\n1. loaddata <address> <filename> - obtains 64-bit"
+           << " data from <filename> and stores to <address>"
+           << "\n2. showdata <address> <N>        - displays <N>"
+           << " data starting from <address>"
+           << "\n3. loadcode <address> <filename> - obtains 32-bit"
+           << " instructions from <filename> and stores to <address>"
+           << "\n4. showcode <address> <N>        - displays <N>"
+           << " instructions starting from <address>"
+           << "\n5. exec <address>                - simulates execution of"
+           << " codes starting from <address>"
+           << "\n6. help                          - displays this message"
+           << "\n7. exit                          - terminates the program"
            << endl;
     }
 
-    else if(command == "LOADDATA")
+    else if(command == "LOADDATA" || command == "LOADCODE")
     {
-      cout << "loaddata";
+      ss >> address >> filename;
+      if(address.empty() && filename.empty())
+      {
+        cout << "\nERROR: Missing arguments. Type \"HELP\" to display all commands.\n";
+        continue;
+      }
+      else
+      {
+        if(!isValidHex(address, 8))
+        {
+          cout << "\nERROR: Please input an 8-bit hex value for <address>." << endl;
+          continue;
+        }
+
+        file.open(filename);
+        if(!file)
+        {
+          cout << "\nERROR: " << filename << " not found." << endl;
+          continue;
+        }
+
+        else
+        {
+          cout << "\nLoading " 
+               << (command == "LOADDATA" ? "data" : "instructions") 
+               << " from " << filename << " to address 0x" << address << endl;
+        }
+      }
     }
 
-    else if(command == "SHOWDATA")
+    else if(command == "SHOWDATA" || command == "SHOWCODE")
     {
-      cout << "showdata";
-    }
-
-    else if(command == "LOADCODE")
-    {
-      cout << "loadcode";
-    }
-
-    else if(command == "SHOWCODE")
-    {
-      cout << "showcode";
+      ss >> address >> N;
+      if(address.empty() && N <= 0)
+      {
+        cout << "\nERROR: Missing arguments. Type \"HELP\" to display all commands.\n";
+        continue;
+      }
+      else
+      {
+        if(!isValidHex(address,8))
+        {
+          cout << "\nERROR: Please input an 8-bit hex value for <address>." << endl;
+          continue;
+        }
+        else
+        {
+          cout << "\nShowing " 
+               << (command == "SHOWDATA" ? "data" : "instructions") 
+               << " " << N << " from address 0x" << address << endl;
+        }
+      }      
     }
 
     else if(command == "EXEC")
