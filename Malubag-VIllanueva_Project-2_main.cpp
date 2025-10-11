@@ -154,8 +154,7 @@ void showCode(string &address, int N, uint8_t * &instruction_memory)
   }
 }
 
-// need to update red and mem
-void parseInstruction(unsigned int instruction, long long * &reg, uint8_t * &mem)
+void execInstruction(unsigned int instruction, long long * &reg, uint8_t * &mem)
 {
     cout << "\nInstruction: " << bitset<32>(instruction) << "\n\n";
 
@@ -188,6 +187,7 @@ void parseInstruction(unsigned int instruction, long long * &reg, uint8_t * &mem
           } 
           else 
           {
+            reg[rd] = reg[rs1] + reg[rs2];
             cout << "add x" << rd << ", x" << rs1 << ", x" 
                   << rs2 << endl;
           }
@@ -200,6 +200,7 @@ void parseInstruction(unsigned int instruction, long long * &reg, uint8_t * &mem
           } 
           else 
           {
+            reg[rd] = reg[rs1] - reg[rs2];
             cout << "sub x" << rd << ", x" << rs1 << ", x" << rs2 
                   << endl;
           }
@@ -215,6 +216,7 @@ void parseInstruction(unsigned int instruction, long long * &reg, uint8_t * &mem
           } 
           else 
           {
+            reg[rd] = reg[rs1] + immediate;
             cout << "addi x" << rd << ", x" << rs1 << ", " 
                   << immediate << endl;
           }
@@ -230,6 +232,13 @@ void parseInstruction(unsigned int instruction, long long * &reg, uint8_t * &mem
           } 
           else 
           {
+            uint64_t mem_addr = reg[rs1] + immediate;
+            uint64_t val = 0;
+            for (int i = 0; i < 8; i++) 
+            {
+              val |= ((uint64_t)mem[mem_addr + i]) << (i * 8);
+            }
+            reg[rd] = val;
             cout << "ld x" << rd << ", " << immediate 
                   << "(x" << rs1 << ")" << endl;
           }
@@ -246,6 +255,12 @@ void parseInstruction(unsigned int instruction, long long * &reg, uint8_t * &mem
           } 
           else 
           {
+            uint64_t mem_addr = reg[rs1] + imm_s;
+            uint64_t val = reg[rs2];
+            for (int i = 0; i < 8; i++) 
+            {
+              mem[mem_addr + i] = (val >> (i * 8)) & 0xFF;
+            }
             cout << "sd x" << rs2 << ", " << imm_s 
                   << "(x" << rs1 << ")" << endl;
           }
@@ -258,6 +273,15 @@ void parseInstruction(unsigned int instruction, long long * &reg, uint8_t * &mem
               << "\tfunct3 = " << funct3
               << "\tfunct7 = " << funct7 << endl;
     }
+
+    // cout << "\n[Register Dump]\n";
+    // for (int i = 0; i < 32; i++) 
+    // {
+    //   cout << "x" << setw(2) << left << i 
+    //        << " = " << dec << reg[i]
+    //        << "\t(0x" << hex << uppercase << reg[i] << ")\n";
+    // }
+    // cout << dec;
 }
 
 int main()
@@ -375,7 +399,41 @@ int main()
 
     else if(command == "EXEC")
     {
-      cout << "exec";
+      // cout << "exec";
+
+      ss >> address;
+      if (address.empty()) 
+      {
+        cout << "\nERROR: Missing <address> argument. Usage: EXEC <address>\n";
+        continue;
+      }
+      if (!isValidHex(address, 8)) 
+      {
+        cout << "\nERROR: Invalid address format.\n";
+        continue;
+      }
+
+      unsigned long long addr = stoull(address, nullptr, 16);
+
+      cout << "\n[Starting execution at 0x" << hex << uppercase << setw(8)
+           << setfill('0') << addr << "]\n";
+
+      for (int i = 0; i < 10; i++) // limit to prevent infinite loop for now
+      { 
+        unsigned int instr = 0;
+        for (int j = 0; j < 4; j++) 
+        {
+          instr |= ((unsigned int)instruction_memory[addr + j]) << (j * 8);
+        }
+
+        cout << "\nExecuting instruction at 0x" << hex << uppercase << setw(8)
+             << setfill('0') << addr << "...\n";
+
+        execInstruction(instr, registers, data_memory);
+        addr += 4; 
+      }
+
+      cout << "\n[Execution finished]\n";
     }
 
     else
