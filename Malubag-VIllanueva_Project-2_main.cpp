@@ -11,12 +11,13 @@
 #include <fstream>
 #include <vector>
 #include <cstdint>
+#include <iomanip>
 
 using namespace std;
 
 bool isValidHex(const string &s, int length)
 {
-  if((int)s.length() != length) return false;
+  if((int)s.length() > length) return false;
   for(int i=0; i<s.length(); i++)
   {
     char c = s[i];
@@ -25,9 +26,14 @@ bool isValidHex(const string &s, int length)
   return true;
 }
 
-void loadData(const string &address, const string &filename, uint8_t * &data_memory)
+void loadData(const string &address, const string &filename, uint8_t * &data_memory, const int memory_size)
 {
   unsigned long long addr = stoull(address, nullptr, 16);
+  if (addr >= memory_size) 
+  {
+    cout << "ERROR: Address out of range." << endl;
+    return;
+  }
   
   ifstream file(filename);
   if(!file.is_open())
@@ -42,27 +48,44 @@ void loadData(const string &address, const string &filename, uint8_t * &data_mem
     stringstream ss(line);
     string hexStr;
 
-    // TO ADD: console feedback if condition is true
-    if(!(ss >> hexStr)) break;
-    if(hexStr.empty()) break;
-    if(!isValidHex(hexStr, 16)) break;
+    if(!(ss >> hexStr)) 
+    {
+      cout << "ERROR: File contains invalid data." << endl;
+      break;
+    }
+    if(hexStr.empty()) 
+    {
+      cout << "ERROR: File is empty." << endl;
+      break;
+    }
+    if(!isValidHex(hexStr, 16)) 
+    {
+      cout << "ERROR: File contains an invalid hex string length." << endl;
+      break;
+    }
 
     unsigned long long value = stoull(hexStr, nullptr, 16);
     for(int i=0; i<8; i++)
     {
       data_memory[addr + i] = (value >> (i * 8)) & 0xFF;
-      cout << hex << int(data_memory[addr + i]) << " ";
     }
     addr += 8;
   }
 
   file.close();
+
+  cout << "Data loaded successfully!" << endl;
 }
 
-void loadCode(const string &address, const string &filename, uint8_t * &instruction_memory)
+void loadCode(const string &address, const string &filename, uint8_t * &instruction_memory, const int memory_size)
 {
   unsigned long long addr = stoull(address, nullptr, 16);
-  
+  if (addr >= memory_size) 
+  {
+    cout << "ERROR: Address out of range." << endl;
+    return;
+  }
+
   ifstream file(filename);
   if(!file.is_open())
   {
@@ -76,16 +99,26 @@ void loadCode(const string &address, const string &filename, uint8_t * &instruct
     stringstream ss(line);
     string hexStr;
 
-    // TO ADD: console feedback if condition is true
-    if(!(ss >> hexStr)) break;
-    if(hexStr.empty()) break;
-    if(!isValidHex(hexStr, 8)) break;
+    if(!(ss >> hexStr)) 
+    {
+      cout << "ERROR: File contains invalid data." << endl;
+      break;
+    }
+    if(hexStr.empty()) 
+    {
+      cout << "ERROR: File is empty." << endl;
+      break;
+    }
+    if(!isValidHex(hexStr, 16)) 
+    {
+      cout << "ERROR: File contains an invalid hex string length." << endl;
+      break;
+    }
 
     unsigned long long value = stoull(hexStr, nullptr, 16);
     for(int i=0; i<4; i++)
     {
       instruction_memory[addr + i] = (value >> (i * 8)) & 0xFF;
-      cout << hex << int(instruction_memory[addr + i]) << " ";
     }
     addr += 4;
   }
@@ -93,14 +126,33 @@ void loadCode(const string &address, const string &filename, uint8_t * &instruct
   file.close();
 }
 
-void showData(string &address, int N)
+void showData(string &address, int N, uint8_t * &data_memory, const int memory_size)
 {
-  
+  unsigned long long addr = stoull(address, nullptr, 16);
+  for(int i=0; i<N; i++)
+  {
+    if (addr >= memory_size) 
+    {
+      cout << "ERROR: Address out of range." << endl;
+      return;
+    }
+
+    uint64_t val = 0;
+    for(int j=0; j<8; j++)
+    {
+      val |= (uint64_t)data_memory[addr + j] << (j * 8);
+    }
+    
+    cout << hex << uppercase << "0x" << setw(8) << setfill('0') << addr << "\t";
+    cout << hex << uppercase << setw(16) << setfill('0') << val << dec << setfill(' ') << endl;
+
+    addr += 8;
+  }
 }
 
-void showCode(string &address, int N)
+void showCode(string &address, int N, uint8_t * &instruction_memory, const int memory_size)
 {
-
+  
 }
 
 // need to update red and mem
@@ -291,10 +343,10 @@ int main()
         {
           cout << "\nLoading " 
                << (command == "LOADDATA" ? "data" : "instructions") 
-               << " from " << filename << " to address 0x" << address << endl;
+               << " from " << filename << " to address " << hex << uppercase << "0x" << setw(8) << setfill('0') << address << endl;
 
-          if(command == "LOADDATA") loadData(address, filename, data_memory);
-          else if(command == "LOADCODE") loadCode(address, filename, instruction_memory);
+          if(command == "LOADDATA") loadData(address, filename, data_memory, memory_size);
+          else if(command == "LOADCODE") loadCode(address, filename, instruction_memory, memory_size);
         }
       }
     }
@@ -318,10 +370,10 @@ int main()
         {
           cout << "\nShowing " 
                << (command == "SHOWDATA" ? "data" : "instructions") 
-               << " " << N << " from address 0x" << address << endl;
+               << " " << N << " from address " << hex << uppercase << "0x" << setw(8) << setfill('0') << address << endl;
 
-          if(command == "SHOWDATA") showData(address, N);
-          else if(command == "SHOWCODE") showCode(address, N);
+          if(command == "SHOWDATA") showData(address, N, data_memory, memory_size);
+          else if(command == "SHOWCODE") showCode(address, N, instruction_memory, memory_size);
         }
       }      
     }
