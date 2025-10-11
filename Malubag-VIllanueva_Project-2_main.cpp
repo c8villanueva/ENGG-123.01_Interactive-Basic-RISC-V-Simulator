@@ -16,7 +16,7 @@ using namespace std;
 
 bool isValidHex(const string &s, int length)
 {
-  if(s.length() != length) return false;
+  if((int)s.length() != length) return false;
   for(int i=0; i<s.length(); i++)
   {
     char c = s[i];
@@ -25,43 +25,72 @@ bool isValidHex(const string &s, int length)
   return true;
 }
 
-void loadData(string &address, string &filename, uint8_t * &memory)
+void loadData(const string &address, const string &filename, uint8_t * &data_memory)
 {
-  ifstream file;
-  stringstream ss;
-  string line;
   unsigned long long addr = stoull(address, nullptr, 16);
-
-  file.open(filename);
+  
+  ifstream file(filename);
   if(!file.is_open())
   {
     cout << "\nERROR: " << filename << " not found." << endl;
     return;
   }
 
+  string line;  
   while(getline(file, line))
   {
-    ss.str(line);
+    stringstream ss(line);
     string hexStr;
 
+    // TO ADD: console feedback if condition is true
     if(!(ss >> hexStr)) break;
-    if(!isValidHex(hexStr, 16)) break;
     if(hexStr.empty()) break;
+    if(!isValidHex(hexStr, 16)) break;
 
-    unsigned long long value = stoull(line, nullptr, 16);
-    
+    unsigned long long value = stoull(hexStr, nullptr, 16);
     for(int i=0; i<8; i++)
-      memory[addr + i] = (value >> (i * 8)) & 0xFF;
-
+    {
+      data_memory[addr + i] = (value >> (i * 8)) & 0xFF;
+      cout << hex << int(data_memory[addr + i]) << " ";
+    }
     addr += 8;
   }
 
   file.close();
 }
 
-void loadCode(string &address, string &filename)
+void loadCode(const string &address, const string &filename, uint8_t * &instruction_memory)
 {
+  unsigned long long addr = stoull(address, nullptr, 16);
+  
+  ifstream file(filename);
+  if(!file.is_open())
+  {
+    cout << "\nERROR: " << filename << " not found." << endl;
+    return;
+  }
 
+  string line;  
+  while(getline(file, line))
+  {
+    stringstream ss(line);
+    string hexStr;
+
+    // TO ADD: console feedback if condition is true
+    if(!(ss >> hexStr)) break;
+    if(hexStr.empty()) break;
+    if(!isValidHex(hexStr, 8)) break;
+
+    unsigned long long value = stoull(hexStr, nullptr, 16);
+    for(int i=0; i<4; i++)
+    {
+      instruction_memory[addr + i] = (value >> (i * 8)) & 0xFF;
+      cout << hex << int(instruction_memory[addr + i]) << " ";
+    }
+    addr += 4;
+  }
+
+  file.close();
 }
 
 void showData(string &address, int N)
@@ -200,7 +229,8 @@ int main()
 
   // memory
   const int memory_size = 1024 * 64; // 64 KB
-  uint8_t *memory = new uint8_t [memory_size]; 
+  uint8_t *data_memory = new uint8_t [memory_size]; 
+  uint8_t *instruction_memory = new uint8_t [memory_size];
   
   while(true)
   {
@@ -218,7 +248,8 @@ int main()
       ss.clear();
       file.close();
       delete [] registers;
-      delete [] memory;
+      delete [] data_memory;
+      delete [] instruction_memory;
 
       cout << "\nProgram has been terminated.\n" << endl;
       return 0;
@@ -262,8 +293,8 @@ int main()
                << (command == "LOADDATA" ? "data" : "instructions") 
                << " from " << filename << " to address 0x" << address << endl;
 
-          if(command == "LOADDATA") loadData(address, filename, memory);
-          else if(command == "LOADCODE") loadCode(address, filename);
+          if(command == "LOADDATA") loadData(address, filename, data_memory);
+          else if(command == "LOADCODE") loadCode(address, filename, instruction_memory);
         }
       }
     }
