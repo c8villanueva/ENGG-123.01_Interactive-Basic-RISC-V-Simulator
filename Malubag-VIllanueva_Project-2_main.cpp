@@ -26,14 +26,9 @@ bool isValidHex(const string &s, int length)
   return true;
 }
 
-void loadData(const string &address, const string &filename, uint8_t * &data_memory, const int memory_size)
+void loadData(const string &address, const string &filename, uint8_t * &data_memory)
 {
   unsigned long long addr = stoull(address, nullptr, 16);
-  if (addr >= memory_size) 
-  {
-    cout << "ERROR: Address out of range." << endl;
-    return;
-  }
   
   ifstream file(filename);
   if(!file.is_open())
@@ -74,17 +69,12 @@ void loadData(const string &address, const string &filename, uint8_t * &data_mem
 
   file.close();
 
-  cout << "Data loaded successfully!" << endl;
+  cout << "\nData loaded successfully from " << filename << " to address " << hex << uppercase << "0x" << setw(8) << setfill('0') << address << endl;
 }
 
-void loadCode(const string &address, const string &filename, uint8_t * &instruction_memory, const int memory_size)
+void loadCode(const string &address, const string &filename, uint8_t * &instruction_memory)
 {
   unsigned long long addr = stoull(address, nullptr, 16);
-  if (addr >= memory_size) 
-  {
-    cout << "ERROR: Address out of range." << endl;
-    return;
-  }
 
   ifstream file(filename);
   if(!file.is_open())
@@ -124,19 +114,15 @@ void loadCode(const string &address, const string &filename, uint8_t * &instruct
   }
 
   file.close();
+
+  cout << "\nInstructions loaded successfully from " << filename << " to address " << hex << uppercase << "0x" << setw(8) << setfill('0') << address << endl;
 }
 
-void showData(string &address, int N, uint8_t * &data_memory, const int memory_size)
+void showData(string &address, int N, uint8_t * &data_memory)
 {
   unsigned long long addr = stoull(address, nullptr, 16);
   for(int i=0; i<N; i++)
   {
-    if (addr >= memory_size) 
-    {
-      cout << "ERROR: Address out of range." << endl;
-      return;
-    }
-
     uint64_t val = 0;
     for(int j=0; j<8; j++)
     {
@@ -150,9 +136,22 @@ void showData(string &address, int N, uint8_t * &data_memory, const int memory_s
   }
 }
 
-void showCode(string &address, int N, uint8_t * &instruction_memory, const int memory_size)
+void showCode(string &address, int N, uint8_t * &instruction_memory)
 {
-  
+  unsigned long long addr = stoull(address, nullptr, 16);
+  for(int i=0; i<N; i++)
+  {
+    uint64_t val = 0;
+    for(int j=0; j<4; j++)
+    {
+      val |= (uint32_t)instruction_memory[addr + j] << (j * 8);
+    }
+    
+    cout << hex << uppercase << "0x" << setw(8) << setfill('0') << addr << "\t";
+    cout << hex << uppercase << setw(8) << setfill('0') << val << dec << setfill(' ') << endl;
+
+    addr += 4;
+  }
 }
 
 // need to update red and mem
@@ -341,12 +340,8 @@ int main()
         }
         else
         {
-          cout << "\nLoading " 
-               << (command == "LOADDATA" ? "data" : "instructions") 
-               << " from " << filename << " to address " << hex << uppercase << "0x" << setw(8) << setfill('0') << address << endl;
-
-          if(command == "LOADDATA") loadData(address, filename, data_memory, memory_size);
-          else if(command == "LOADCODE") loadCode(address, filename, instruction_memory, memory_size);
+          if(command == "LOADDATA") loadData(address, filename, data_memory);
+          else if(command == "LOADCODE") loadCode(address, filename, instruction_memory);
         }
       }
     }
@@ -368,12 +363,12 @@ int main()
         }
         else
         {
-          cout << "\nShowing " 
+          cout << "\nShowing " << N << " "
                << (command == "SHOWDATA" ? "data" : "instructions") 
-               << " " << N << " from address " << hex << uppercase << "0x" << setw(8) << setfill('0') << address << endl;
+               << " from address " << hex << uppercase << "0x" << setw(8) << setfill('0') << address << endl;
 
-          if(command == "SHOWDATA") showData(address, N, data_memory, memory_size);
-          else if(command == "SHOWCODE") showCode(address, N, instruction_memory, memory_size);
+          if(command == "SHOWDATA") showData(address, N, data_memory);
+          else if(command == "SHOWCODE") showCode(address, N, instruction_memory);
         }
       }      
     }
