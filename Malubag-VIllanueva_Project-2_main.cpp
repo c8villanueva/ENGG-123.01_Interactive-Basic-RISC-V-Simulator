@@ -277,7 +277,7 @@ void execInstruction(unsigned int instruction, long long * &reg, uint8_t * &mem)
       break;
 
       //case 0b0100011: // need to add BLT instruction
-      break;
+      //break;
 
     default:
       cout << "Unsupported instruction.\n"
