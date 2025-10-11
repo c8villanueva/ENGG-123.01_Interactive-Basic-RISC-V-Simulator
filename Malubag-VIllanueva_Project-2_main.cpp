@@ -156,132 +156,143 @@ void showCode(string &address, int N, uint8_t * &instruction_memory)
 
 void execInstruction(unsigned int instruction, long long * &reg, uint8_t * &mem)
 {
-    cout << "\nInstruction: " << bitset<32>(instruction) << "\n\n";
+  cout << "\nInstruction: " << bitset<32>(instruction) << "\n\n";
 
-    unsigned int opcode =  instruction & 0x7F;
-    unsigned int rd     = (instruction >> 7)  & 0x1F;
+  unsigned int opcode =  instruction & 0x7F;
+  unsigned int rd     = (instruction >> 7)  & 0x1F;
 
-    // R Format
-    unsigned int funct3 = (instruction >> 12) & 0x07;
-    unsigned int rs1    = (instruction >> 15) & 0x1F;
-    unsigned int rs2    = (instruction >> 20) & 0x1F;
-    unsigned int funct7 = (instruction >> 25) & 0x7F;
+  // R Format
+  unsigned int funct3 = (instruction >> 12) & 0x07;
+  unsigned int rs1    = (instruction >> 15) & 0x1F;
+  unsigned int rs2    = (instruction >> 20) & 0x1F;
+  unsigned int funct7 = (instruction >> 25) & 0x7F;
 
-    // I Format
-    int immediate = (instruction >> 20) & 0xFFF;
-    if (immediate & 0x800) immediate |= 0xFFFFF000;
+  // I Format
+  int immediate = (instruction >> 20) & 0xFFF;
+  if (immediate & 0x800) immediate |= 0xFFFFF000;
 
-    // S Format
-    int imm_s = ((instruction >> 7) & 0x1F) | 
-                (((instruction >> 25) & 0x7F) << 5);
-    if (imm_s & 0x800) imm_s |= 0xFFFFF000;
+  // S Format
+  int imm_s = ((instruction >> 7) & 0x1F) | 
+              (((instruction >> 25) & 0x7F) << 5);
+  if (imm_s & 0x800) imm_s |= 0xFFFFF000;
 
-    switch (opcode) {
-      case 0b0110011: // R-type ADD/SUB
-        if (funct3 == 0 && funct7 == 0x00) 
-        { // ADD
-          if (rd == 0) 
-          {
-            cout << "ERROR: Cannot write to x0 (rd = 0)." 
-                  << endl;
-          } 
-          else 
-          {
-            reg[rd] = reg[rs1] + reg[rs2];
-            cout << "add x" << rd << ", x" << rs1 << ", x" 
-                  << rs2 << endl;
-          }
-        }
-        if (funct3 == 0 && funct7 == 0x20) 
-        { // SUB
-          if (rd == 0) 
-          {
-            cout << "ERROR: Cannot write to x0 (rd = 0)." << endl;
-          } 
-          else 
-          {
-            reg[rd] = reg[rs1] - reg[rs2];
-            cout << "sub x" << rd << ", x" << rs1 << ", x" << rs2 
-                  << endl;
-          }
-        }
-        break;
+  vector<unsigned int> usedRegs;
 
-      case 0b0010011: // I-type ADDI
-        if (funct3 == 0) 
+  switch (opcode) {
+    case 0b0110011: // R-type ADD/SUB
+      if (funct3 == 0 && funct7 == 0x00) 
+      { // ADD
+        if (rd == 0) 
         {
-          if (rd == 0) 
-          {
-            cout << "ERROR: Cannot write to x0 (rd = 0)." << endl;
-          } 
-          else 
-          {
-            reg[rd] = reg[rs1] + immediate;
-            cout << "addi x" << rd << ", x" << rs1 << ", " 
-                  << immediate << endl;
-          }
-        }
-        break;
-
-      case 0b0000011: // I-type LD
-        if (funct3 == 3) 
+          cout << "ERROR: Cannot write to x0 (rd = 0)." 
+                << endl;
+        } 
+        else 
         {
-          if (rd == 0) 
-          {
-            cout << "ERROR: Cannot write to x0 (rd = 0)." << endl;
-          } 
-          else 
-          {
-            uint64_t mem_addr = reg[rs1] + immediate;
-            uint64_t val = 0;
-            for (int i = 0; i < 8; i++) 
-            {
-              val |= ((uint64_t)mem[mem_addr + i]) << (i * 8);
-            }
-            reg[rd] = val;
-            cout << "ld x" << rd << ", " << immediate 
-                  << "(x" << rs1 << ")" << endl;
-          }
+          reg[rd] = reg[rs1] + reg[rs2];
+          cout << "add x" << rd << ", x" << rs1 << ", x" 
+                << rs2 << endl;
+          usedRegs = {rd, rs1, rs2};
         }
-        break;
-
-      case 0b0100011: // S-type SD
-        if (funct3 == 3) 
+      }
+      if (funct3 == 0 && funct7 == 0x20) 
+      { // SUB
+        if (rd == 0) 
         {
-          if (rs2 == 0) 
-          {
-            cout << "ERROR: Cannot store from x0 (rs2 = 0)." 
-                  << endl; 
-          } 
-          else 
-          {
-            uint64_t mem_addr = reg[rs1] + imm_s;
-            uint64_t val = reg[rs2];
-            for (int i = 0; i < 8; i++) 
-            {
-              mem[mem_addr + i] = (val >> (i * 8)) & 0xFF;
-            }
-            cout << "sd x" << rs2 << ", " << imm_s 
-                  << "(x" << rs1 << ")" << endl;
-          }
+          cout << "ERROR: Cannot write to x0 (rd = 0)." << endl;
+        } 
+        else 
+        {
+          reg[rd] = reg[rs1] - reg[rs2];
+          cout << "sub x" << rd << ", x" << rs1 << ", x" << rs2 
+                << endl;
+          usedRegs = {rd, rs1, rs2};
         }
-        break;
+      }
+      break;
 
-      default:
-        cout << "Unsupported instruction.\n"
-              << "opcode = "   << opcode
-              << "\tfunct3 = " << funct3
-              << "\tfunct7 = " << funct7 << endl;
+    case 0b0010011: // I-type ADDI
+      if (funct3 == 0) 
+      {
+        if (rd == 0) 
+        {
+          cout << "ERROR: Cannot write to x0 (rd = 0)." << endl;
+        } 
+        else 
+        {
+          reg[rd] = reg[rs1] + immediate;
+          cout << "addi x" << rd << ", x" << rs1 << ", " 
+                << immediate << endl;
+          usedRegs = {rd, rs1};
+        }
+      }
+      break;
+
+    case 0b0000011: // I-type LD
+      if (funct3 == 3) 
+      {
+        if (rd == 0) 
+        {
+          cout << "ERROR: Cannot write to x0 (rd = 0)." << endl;
+        } 
+        else 
+        {
+          uint64_t mem_addr = reg[rs1] + immediate;
+          uint64_t val = 0;
+          for (int i = 0; i < 8; i++) 
+          {
+            val |= ((uint64_t)mem[mem_addr + i]) << (i * 8);
+          }
+          reg[rd] = val;
+          cout << "ld x" << rd << ", " << immediate 
+                << "(x" << rs1 << ")" << endl;
+          usedRegs = {rd, rs1};
+        }
+      }
+      break;
+
+    case 0b0100011: // S-type SD
+      if (funct3 == 3) 
+      {
+        if (rs2 == 0) 
+        {
+          cout << "ERROR: Cannot store from x0 (rs2 = 0)." 
+                << endl; 
+        } 
+        else 
+        {
+          uint64_t mem_addr = reg[rs1] + imm_s;
+          uint64_t val = reg[rs2];
+          for (int i = 0; i < 8; i++) 
+          {
+            mem[mem_addr + i] = (val >> (i * 8)) & 0xFF;
+          }
+          cout << "sd x" << rs2 << ", " << imm_s 
+                << "(x" << rs1 << ")" << endl;
+          usedRegs = {rs1, rs2};
+        }
+      }
+      break;
+
+    default:
+      cout << "Unsupported instruction.\n"
+            << "opcode = "   << opcode
+            << "\tfunct3 = " << funct3
+            << "\tfunct7 = " << funct7 << endl;
+  }
+
+  if (!usedRegs.empty()) 
+  {
+    cout << "\n[Register Dump]\n";
+    for (int r : usedRegs) {
+      if (r == 0) continue; // skip x0 (always zero)
+      cout << "x" << setw(2) << left << r
+           << " = " << dec << reg[r]
+           << "\t(0x" << hex << uppercase << reg[r] << ")\n";
     }
+    cout << dec;
+  }
 
-    // cout << "\n[Register Dump]\n";
-    // for (int i = 0; i < 32; i++) 
-    // {
-    //   cout << "x" << setw(2) << left << i 
-    //        << " = " << dec << reg[i]
-    //        << "\t(0x" << hex << uppercase << reg[i] << ")\n";
-    // }
-    // cout << dec;
 }
 
 int main()
@@ -399,8 +410,6 @@ int main()
 
     else if(command == "EXEC")
     {
-      // cout << "exec";
-
       ss >> address;
       if (address.empty()) 
       {
@@ -414,27 +423,39 @@ int main()
       }
 
       unsigned long long addr = stoull(address, nullptr, 16);
+      unsigned long long PC = addr;
 
       cout << "\n[Starting execution at 0x" << hex << uppercase << setw(8)
-           << setfill('0') << addr << "]\n";
+          << setfill('0') << PC << "]\n";
 
-      for (int i = 0; i < 10; i++) // limit to prevent infinite loop for now
-      { 
-        unsigned int instr = 0;
-        for (int j = 0; j < 4; j++) 
+      while (true)
+      {
+        if (PC + 4 >= memory_size)
         {
-          instr |= ((unsigned int)instruction_memory[addr + j]) << (j * 8);
+          cout << "\n[ERROR] Program counter out of bounds. Halting execution.\n";
+          break;
+        }
+
+        unsigned int instr = 0;
+        for (int j = 0; j < 4; j++)
+        {
+          instr |= ((unsigned int)instruction_memory[PC + j]) << (j * 8);
+        }
+        if (instr == 0x00000000)
+        {
+          break;
         }
 
         cout << "\nExecuting instruction at 0x" << hex << uppercase << setw(8)
-             << setfill('0') << addr << "...\n";
+             << setfill('0') << PC << "...\n";
 
         execInstruction(instr, registers, data_memory);
-        addr += 4; 
+
+        PC += 4;
       }
 
-      cout << "\n[Execution finished]\n";
-    }
+      cout << "\nExecution finished\n";
+      }
 
     else
     {
