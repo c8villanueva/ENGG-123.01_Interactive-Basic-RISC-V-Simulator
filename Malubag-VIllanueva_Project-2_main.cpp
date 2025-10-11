@@ -228,6 +228,8 @@ void execInstruction(unsigned int instruction, long long * &reg, uint8_t * &mem)
       }
       break;
 
+      // need to add SLLI instruction
+
     case 0b0000011: // I-type LD
       if (funct3 == 3) 
       {
@@ -272,6 +274,9 @@ void execInstruction(unsigned int instruction, long long * &reg, uint8_t * &mem)
           usedRegs = {rs1, rs2};
         }
       }
+      break;
+
+      //case 0b0100011: // need to add BLT instruction
       break;
 
     default:
