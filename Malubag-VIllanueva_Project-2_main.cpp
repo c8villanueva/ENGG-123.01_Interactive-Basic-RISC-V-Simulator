@@ -74,7 +74,7 @@ void showCode(string &address, int N)
 
 }
 
-//need to update red and mem
+// need to update red and mem
 void parseInstruction(unsigned int instruction, long long * &reg, uint8_t * &mem)
 {
     cout << "\nInstruction: " << bitset<32>(instruction) << "\n\n";
@@ -194,11 +194,11 @@ int main()
   int N = 0;
   ifstream file;
 
-  //32 64-bit registers
+  // 32 64-bit registers
   long long *registers = new long long [32];
   for(int i=0; i<32; i++) registers[i] = 0;
 
-  //memory
+  // memory
   const int memory_size = 1024 * 64; // 64 KB
   uint8_t *memory = new uint8_t [memory_size]; 
   
