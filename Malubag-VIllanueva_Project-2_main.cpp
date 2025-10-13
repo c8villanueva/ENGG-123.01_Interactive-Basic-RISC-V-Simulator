@@ -27,21 +27,21 @@ bool isValidHex(const string &s, int length)
   return true;
 }
 
-void loadData(const string &address, const string &filename, 
+bool loadData(const string &address, const string &filename, 
               uint8_t * &data_memory, const int memory_size)
 {
   unsigned long long addr = stoull(address, nullptr, 16);
   if(addr >= memory_size)
   {
     cout << "\nERROR: Address exceeds memory size." << endl;
-    return;
+    return false;
   }
   
   ifstream file(filename);
   if(!file.is_open())
   {
     cout << "\nERROR: " << filename << " not found." << endl;
-    return;
+    return false;
   }
 
   string line;  
@@ -52,19 +52,19 @@ void loadData(const string &address, const string &filename,
 
     if(!(ss >> hexStr)) 
     {
-      cout << "ERROR: File contains invalid data." << endl;
-      break;
+      cout << "\nERROR: File contains invalid data." << endl;
+      return false;
     }
     if(hexStr.empty()) 
     {
-      cout << "ERROR: File is empty." << endl;
-      break;
+      cout << "\nERROR: File is empty." << endl;
+      return false;
     }
     if(!isValidHex(hexStr, 16)) 
     {
-      cout << "ERROR: File contains an invalid hex string length." 
+      cout << "\nERROR: File contains an invalid hex string length." 
            << endl;
-      break;
+      return false;
     }
 
     if(addr+8 > memory_size)
@@ -83,26 +83,24 @@ void loadData(const string &address, const string &filename,
 
   file.close();
 
-  cout << "\nData loaded successfully from " << filename 
-       << " to address " << hex << uppercase << "0x" << setw(8) 
-       << setfill('0') << address << endl;
+  return true;
 }
 
-void loadCode(const string &address, const string &filename, 
+bool loadCode(const string &address, const string &filename, 
               uint8_t * &instruction_memory, const int memory_size)
 {
   unsigned long long addr = stoull(address, nullptr, 16);
   if(addr >= memory_size)
   {
     cout << "\nERROR: Address exceeds memory size." << endl;
-    return;
+    return false;
   }
 
   ifstream file(filename);
   if(!file.is_open())
   {
     cout << "\nERROR: " << filename << " not found." << endl;
-    return;
+    return false;
   }
 
   string line;  
@@ -113,19 +111,19 @@ void loadCode(const string &address, const string &filename,
 
     if(!(ss >> hexStr)) 
     {
-      cout << "ERROR: File contains invalid data." << endl;
-      break;
+      cout << "\nERROR: File contains invalid data." << endl;
+      return false;
     }
     if(hexStr.empty()) 
     {
-      cout << "ERROR: File is empty." << endl;
-      break;
+      cout << "\nERROR: File is empty." << endl;
+      return false;
     }
     if(!isValidHex(hexStr, 8)) 
     {
-      cout << "ERROR: File contains an invalid hex string length." 
+      cout << "\nERROR: File contains an invalid hex string length." 
            << endl;
-      break;
+      return false;
     }
 
     if(addr+4 > memory_size)
@@ -144,9 +142,7 @@ void loadCode(const string &address, const string &filename,
 
   file.close();
 
-  cout << "\nInstructions loaded successfully from " << filename 
-       << " to address " << hex << uppercase << "0x" << setw(8) 
-       << setfill('0') << address << endl;
+  return true;
 }
 
 void showData(string &address, int N, uint8_t * &data_memory,
@@ -337,7 +333,7 @@ int execInstruction(unsigned int instruction, long long * &reg,
       {
         if (rs2 == 0) 
         {
-          cout << "ERROR: Cannot store from x0 (rs2 = 0)." 
+          cout << "\nERROR: Cannot store from x0 (rs2 = 0)." 
                 << endl; 
         } 
         else 
@@ -494,7 +490,7 @@ int main()
     else if(command == "LOADDATA" || command == "LOADCODE")
     {
       ss >> address >> filename;
-      if(address.empty() && filename.empty())
+      if(address.empty() || filename.empty())
       {
         cout << "\nERROR: Missing arguments. ";
         cout << "Type \"HELP\" to display all commands.\n";
@@ -511,11 +507,25 @@ int main()
         {
           if(command == "LOADDATA") 
           {
-            loadData(address, filename, data_memory, memory_size);
+            if (!loadData(address, filename, data_memory, memory_size))
+              cout << "\nERROR: Failed to load data from " << filename << endl;
+            else
+            {
+              cout << "\nData loaded successfully from " << filename 
+                   << " to address " << hex << uppercase << "0x" << setw(8) 
+                   << setfill('0') << address << endl;
+            }
           }
           else if(command == "LOADCODE") 
           {
-            loadCode(address, filename, instruction_memory, memory_size);
+            if (!loadCode(address, filename, instruction_memory, memory_size))
+              cout << "\nERROR: Failed to load code from " << filename << endl;
+            else
+            {
+              cout << "\nInstructions loaded successfully from " << filename 
+                   << " to address " << hex << uppercase << "0x" << setw(8) 
+                   << setfill('0') << address << endl;
+            }
           }
         }
       }
@@ -524,7 +534,7 @@ int main()
     else if(command == "SHOWDATA" || command == "SHOWCODE")
     {
       ss >> address >> N;
-      if(address.empty() && N <= 0)
+      if(address.empty() || N <= 0)
       {
         cout << "\nERROR: Missing arguments. Type \"HELP\" to display all commands.\n";
         continue;
