@@ -1,0 +1,18 @@
+44000513   # addi a0, zero, 0x440
+00A00793   # addi a5, zero, 10
+00000593   # addi a1, zero, 0
+00000613   # addi a2, zero, 0
+00361693   # slli a3, a2, 3
+00D506B3   # add a3, a0, a3
+0006B703   # ld a4, 0(a3)
+0086B803   # ld a6, 8(a3)
+01074263   # blt a4, a6, skip
+00E6B423   # sd a4, 8(a3)
+0106B023   # sd a6, 0(a3)
+00160613   # addi a2, a2, 1
+FFF78713   # addi a4, a5, -1
+FD071EE3   # bne a4, a2, inner
+00158593   # addi a1, a1, 1
+FCD79EE3   # bne a5, a1, outer
+00000013   # addi x0, x0, 0 (NOP)
+00000000   # end/padding

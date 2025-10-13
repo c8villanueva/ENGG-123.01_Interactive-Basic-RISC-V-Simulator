@@ -234,7 +234,6 @@ int execInstruction(unsigned int instruction, long long * &reg,
 
   switch (opcode) {
     case 0b0110011: // R-type ADD/SUB
-      cout << "R-type (ADD/SUB) instruction detected.\n\n";
 
       if (funct3 == 0 && funct7 == 0x00) 
       { // ADD
@@ -267,9 +266,7 @@ int execInstruction(unsigned int instruction, long long * &reg,
       }
       break;
 
-    case 0b0010011: // I-type ADDI
-      cout << "I-type (ADDI) instruction detected.\n\n";
-
+    case 0b0010011: // I-type
       if (funct3 == 0) 
       { //ADDI
         if (rd == 0) 
@@ -302,8 +299,6 @@ int execInstruction(unsigned int instruction, long long * &reg,
       break;
 
     case 0b0000011: // I-type LD
-      cout << "I-type (LD) instruction detected.\n\n";
-
       if (funct3 == 3) 
       {
         if (rd == 0) 
@@ -327,8 +322,6 @@ int execInstruction(unsigned int instruction, long long * &reg,
       break;
 
     case 0b0100011: // S-type SD
-      cout << "S-type (SD) instruction detected.\n\n";
-
       if (funct3 == 3) 
       {
         if (rs2 == 0) 
@@ -352,8 +345,6 @@ int execInstruction(unsigned int instruction, long long * &reg,
       break;
 
      case 0b1100011: // B-type Branch instructions
-      cout << "B-type (Branch) instruction detected.\n\n";
-
       if (funct3 == 0x1) 
         { // BLT 
           if ((long long)reg[rs1] < (long long)reg[rs2]) 
