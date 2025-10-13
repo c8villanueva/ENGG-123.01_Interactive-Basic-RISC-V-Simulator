@@ -203,7 +203,7 @@ void showCode(string &address, int N, uint8_t * &instruction_memory,
   }
 }
 
-void execInstruction(unsigned int instruction, long long * &reg, 
+int execInstruction(unsigned int instruction, long long * &reg, 
                      uint8_t * &mem)
 {
   cout << "\nInstruction: " << bitset<32>(instruction) << "\n\n";
@@ -231,12 +231,14 @@ void execInstruction(unsigned int instruction, long long * &reg,
               (((instruction >> 25) & 0x3F) << 5)  | 
               (((instruction >> 7) & 0x01)  << 11) | 
               (((instruction >> 31) & 0x01) << 12);
+  if (imm_b & 0x1000) imm_b |= 0xFFFFE000;
 
   vector<unsigned int> usedRegs;
+  int pcOffset = 4;
 
   switch (opcode) {
     case 0b0110011: // R-type ADD/SUB
-      cout << "-type (ADD/SUB) instruction detected.\n\n";
+      cout << "R-type (ADD/SUB) instruction detected.\n\n";
 
       if (funct3 == 0 && funct7 == 0x00) 
       { // ADD
@@ -288,7 +290,18 @@ void execInstruction(unsigned int instruction, long long * &reg,
       }
       if (funct3 == 1 && funct7 == 0)
       { // SLLI
-        
+        unsigned int shamt = rs2;
+        if (rd == 0) 
+        {
+          cout << "ERROR: Cannot write to x0 (rd = 0)." << endl;
+        } 
+        else 
+        {
+          reg[rd] = reg[rs1] << shamt;
+          cout << "slli x" << rd << ", x" << rs1 << ", " 
+                << shamt << endl;
+          usedRegs = {rd, rs1};
+        }
       }
       break;
 
@@ -345,51 +358,51 @@ void execInstruction(unsigned int instruction, long long * &reg,
      case 0b1100011: // B-type Branch instructions
       cout << "B-type (Branch) instruction detected.\n\n";
 
-      if (funct3 == 0x1) // BLT (Branch if Less Than)
-      { 
-        bool takeBranch = ((long long)reg[rs1] < (long long)reg[rs2]);
-        cout << "blt x" << rs1 << ", x" << rs2 << ", " << dec << imm_b;
-        
-        if (takeBranch) 
-        {
-          cout << " Branch taken to 0x" << hex << uppercase << endl;
-        } 
-        else 
-        {
-          cout << "ERROR: Branch not taken." << endl;
+      if (funct3 == 0x1) 
+        { // BLT 
+          if ((long long)reg[rs1] < (long long)reg[rs2]) 
+          {
+            cout << "blt x" << rs1 << ", x" << rs2 << ", " 
+                 << imm_b << " (branch taken)" << endl;
+            pcOffset = imm_b;
+          } 
+          else 
+          {
+            cout << "blt x" << rs1 << ", x" << rs2 << ", " 
+                 << imm_b << " (branch not taken)" << endl;
+          }
+          usedRegs = {rs1, rs2};
         }
-        usedRegs = {rs1, rs2};
-      }
-      else if (funct3 == 0x0) // BEQ (Branch if Equal)
-      { 
-        bool takeBranch = (reg[rs1] == reg[rs2]);
-        cout << "beq x" << rs1 << ", x" << rs2 << ", " << dec << imm_b;
-        
-        if (takeBranch) 
-        {
-          cout << " Branch taken to 0x" << hex << uppercase << endl;
-        } 
-        else 
-        {
-          cout << " ERROR: Branch not taken." << endl;
+        else if (funct3 == 0x0)
+        { // BEQ
+          if (reg[rs1] == reg[rs2]) 
+          {
+            cout << "beq x" << rs1 << ", x" << rs2 << ", " 
+                 << imm_b << " (branch taken)" << endl;
+            pcOffset = imm_b;
+          } 
+          else 
+          {
+            cout << "beq x" << rs1 << ", x" << rs2 << ", " 
+                 << imm_b << " (branch not taken)" << endl;
+          }
+          usedRegs = {rs1, rs2};
         }
-        usedRegs = {rs1, rs2};
-      }
-      else if (funct3 == 0x5) // BGE (Branch if Greater or Equal)
-      { 
-        bool takeBranch = ((long long)reg[rs1] >= (long long)reg[rs2]);
-        cout << "bge x" << rs1 << ", x" << rs2 << ", " << dec << imm_b;
-        
-        if (takeBranch) 
-        {
-          cout << " Branch taken to 0x" << hex << uppercase << endl;
-        } 
-        else 
-        {
-          cout << " ERROR: Branch not taken." << endl;
+        else if (funct3 == 0x5)
+        { // BGE
+          if ((long long)reg[rs1] >= (long long)reg[rs2]) 
+          {
+            cout << "bge x" << rs1 << ", x" << rs2 << ", " 
+                 << imm_b << " (branch taken)" << endl;
+            pcOffset = imm_b;
+          } 
+          else 
+          {
+            cout << "bge x" << rs1 << ", x" << rs2 << ", " 
+                 << imm_b << " (branch not taken)" << endl;
+          }
+          usedRegs = {rs1, rs2};
         }
-        usedRegs = {rs1, rs2};
-      }
       break;
 
     default:
@@ -411,6 +424,7 @@ void execInstruction(unsigned int instruction, long long * &reg,
     cout << dec;
   }
 
+  return pcOffset;
 }
 
 int main()
@@ -583,9 +597,9 @@ int main()
         cout << "\nExecuting instruction at 0x" << hex << uppercase 
              << setw(8) << setfill('0') << PC << "...\n";
 
-        execInstruction(instr, registers, data_memory);
+        int pcOffset = execInstruction(instr, registers, data_memory);
 
-        PC += 4;
+        PC += pcOffset; 
       }
 
       cout << "\nExecution finished\n";
