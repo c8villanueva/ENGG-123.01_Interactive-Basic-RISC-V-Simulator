@@ -286,7 +286,6 @@ void execInstruction(unsigned int instruction, long long * &reg,
           usedRegs = {rd, rs1};
         }
       }
-      // need to add SLLI instruction
       if (funct3 == 1 && funct7 == 0)
       { // SLLI
         
