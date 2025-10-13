@@ -26,7 +26,8 @@ bool isValidHex(const string &s, int length)
   return true;
 }
 
-void loadData(const string &address, const string &filename, uint8_t * &data_memory)
+void loadData(const string &address, const string &filename, 
+              uint8_t * &data_memory)
 {
   unsigned long long addr = stoull(address, nullptr, 16);
   
@@ -55,7 +56,8 @@ void loadData(const string &address, const string &filename, uint8_t * &data_mem
     }
     if(!isValidHex(hexStr, 16)) 
     {
-      cout << "ERROR: File contains an invalid hex string length." << endl;
+      cout << "ERROR: File contains an invalid hex string length." 
+           << endl;
       break;
     }
 
@@ -69,10 +71,13 @@ void loadData(const string &address, const string &filename, uint8_t * &data_mem
 
   file.close();
 
-  cout << "\nData loaded successfully from " << filename << " to address " << hex << uppercase << "0x" << setw(8) << setfill('0') << address << endl;
+  cout << "\nData loaded successfully from " << filename 
+       << " to address " << hex << uppercase << "0x" << setw(8) 
+       << setfill('0') << address << endl;
 }
 
-void loadCode(const string &address, const string &filename, uint8_t * &instruction_memory)
+void loadCode(const string &address, const string &filename, 
+              uint8_t * &instruction_memory)
 {
   unsigned long long addr = stoull(address, nullptr, 16);
 
@@ -101,7 +106,8 @@ void loadCode(const string &address, const string &filename, uint8_t * &instruct
     }
     if(!isValidHex(hexStr, 16)) 
     {
-      cout << "ERROR: File contains an invalid hex string length." << endl;
+      cout << "ERROR: File contains an invalid hex string length." 
+           << endl;
       break;
     }
 
@@ -115,7 +121,9 @@ void loadCode(const string &address, const string &filename, uint8_t * &instruct
 
   file.close();
 
-  cout << "\nInstructions loaded successfully from " << filename << " to address " << hex << uppercase << "0x" << setw(8) << setfill('0') << address << endl;
+  cout << "\nInstructions loaded successfully from " << filename 
+       << " to address " << hex << uppercase << "0x" << setw(8) 
+       << setfill('0') << address << endl;
 }
 
 void showData(string &address, int N, uint8_t * &data_memory)
@@ -129,8 +137,10 @@ void showData(string &address, int N, uint8_t * &data_memory)
       val |= (uint64_t)data_memory[addr + j] << (j * 8);
     }
     
-    cout << hex << uppercase << "0x" << setw(8) << setfill('0') << addr << "\t";
-    cout << hex << uppercase << setw(16) << setfill('0') << val << dec << setfill(' ') << endl;
+    cout << hex << uppercase << "0x" << setw(8) << setfill('0') 
+         << addr << "\t";
+    cout << hex << uppercase << setw(16) << setfill('0') << val 
+         << dec << setfill(' ') << endl;
 
     addr += 8;
   }
@@ -147,14 +157,17 @@ void showCode(string &address, int N, uint8_t * &instruction_memory)
       val |= (uint32_t)instruction_memory[addr + j] << (j * 8);
     }
     
-    cout << hex << uppercase << "0x" << setw(8) << setfill('0') << addr << "\t";
-    cout << hex << uppercase << setw(8) << setfill('0') << val << dec << setfill(' ') << endl;
+    cout << hex << uppercase << "0x" << setw(8) << setfill('0') 
+         << addr << "\t";
+    cout << hex << uppercase << setw(8) << setfill('0') << val 
+         << dec << setfill(' ') << endl;
 
     addr += 4;
   }
 }
 
-void execInstruction(unsigned int instruction, long long * &reg, uint8_t * &mem)
+void execInstruction(unsigned int instruction, long long * &reg, 
+                     uint8_t * &mem)
 {
   cout << "\nInstruction: " << bitset<32>(instruction) << "\n\n";
 
@@ -353,6 +366,7 @@ int main()
 
     else if(command == "HELP")
     {
+      // some of these lines go over 70 chars teka
       cout << "\n1. loaddata <address> <filename> - obtains 64-bit"
            << " data from <filename> and stores to <address>"
            << "\n2. showdata <address> <N>        - displays <N>"
@@ -373,7 +387,8 @@ int main()
       ss >> address >> filename;
       if(address.empty() && filename.empty())
       {
-        cout << "\nERROR: Missing arguments. Type \"HELP\" to display all commands.\n";
+        cout << "\nERROR: Missing arguments. ";
+        cout << "Type \"HELP\" to display all commands.\n";
         continue;
       }
       else
@@ -385,8 +400,14 @@ int main()
         }
         else
         {
-          if(command == "LOADDATA") loadData(address, filename, data_memory);
-          else if(command == "LOADCODE") loadCode(address, filename, instruction_memory);
+          if(command == "LOADDATA") 
+          {
+            loadData(address, filename, data_memory);
+          }
+          else if(command == "LOADCODE") 
+          {
+            loadCode(address, filename, instruction_memory);
+          }
         }
       }
     }
@@ -410,10 +431,17 @@ int main()
         {
           cout << "\nShowing " << N << " "
                << (command == "SHOWDATA" ? "data" : "instructions") 
-               << " from address " << hex << uppercase << "0x" << setw(8) << setfill('0') << address << endl;
+               << " from address " << hex << uppercase << "0x" 
+               << setw(8) << setfill('0') << address << endl;
 
-          if(command == "SHOWDATA") showData(address, N, data_memory);
-          else if(command == "SHOWCODE") showCode(address, N, instruction_memory);
+          if(command == "SHOWDATA") 
+          {
+            showData(address, N, data_memory);
+          }
+          else if(command == "SHOWCODE") 
+          {
+            showCode(address, N, instruction_memory);
+          }
         }
       }      
     }
@@ -435,8 +463,8 @@ int main()
       unsigned long long addr = stoull(address, nullptr, 16);
       unsigned long long PC = addr;
 
-      cout << "\n[Starting execution at 0x" << hex << uppercase << setw(8)
-          << setfill('0') << PC << "]\n";
+      cout << "\n[Starting execution at 0x" << hex << uppercase 
+           << setw(8) << setfill('0') << PC << "]\n";
 
       while (true)
       {
@@ -449,15 +477,16 @@ int main()
         unsigned int instr = 0;
         for (int j = 0; j < 4; j++)
         {
-          instr |= ((unsigned int)instruction_memory[PC + j]) << (j * 8);
+          instr |= ((unsigned int)instruction_memory[PC + j]) 
+                << (j * 8);
         }
         if (instr == 0x00000000)
         {
           break;
         }
 
-        cout << "\nExecuting instruction at 0x" << hex << uppercase << setw(8)
-             << setfill('0') << PC << "...\n";
+        cout << "\nExecuting instruction at 0x" << hex << uppercase 
+             << setw(8) << setfill('0') << PC << "...\n";
 
         execInstruction(instr, registers, data_memory);
 
