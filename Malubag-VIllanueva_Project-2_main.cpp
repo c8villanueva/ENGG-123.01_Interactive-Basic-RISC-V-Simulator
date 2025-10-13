@@ -159,11 +159,13 @@ void showData(string &address, int N, uint8_t * &data_memory,
     uint64_t val = 0;
     for(int j=0; j<8; j++)
     {
-      val |= (uint64_t)data_memory[addr + j] << (j * 8);
+      val |= ((uint64_t)data_memory[addr + j]) << (j * 8);
     }
+
+
     
-    // cout << hex << uppercase << "0x" << setw(8) << setfill('0') 
-    //      << addr << "\t";
+    cout << hex << uppercase << "0x" << setw(8) << setfill('0') 
+         << addr << "\t";
     cout << hex << uppercase << setw(16) << setfill('0') << val 
          << dec << setfill(' ') << endl;
 
@@ -324,6 +326,9 @@ int execInstruction(unsigned int instruction, long long * &reg,
           cout << "ld x" << rd << ", " << immediate 
                 << "(x" << rs1 << ")" << endl;
           usedRegs = {rd, rs1};
+
+          cout << "[DEBUG] mem_addr = 0x" << hex << mem_addr << dec << endl;
+
         }
       }
       break;
@@ -347,6 +352,8 @@ int execInstruction(unsigned int instruction, long long * &reg,
           cout << "sd x" << rs2 << ", " << imm_s 
                 << "(x" << rs1 << ")" << endl;
           usedRegs = {rs1, rs2};
+
+          cout << "[DEBUG] mem_addr = 0x" << hex << mem_addr << dec << endl;
         }
       }
       break;
