@@ -17,8 +17,7 @@ using namespace std;
 
 bool isValidHex(const string &s, int length)
 {
-  if(s.empty() || (s.length()%2 != 0) || 
-     (int)s.length() > length) return false;
+  if(s.empty() || (int)s.length() > length) return false;
   for(int i=0; i<s.length(); i++)
   {
     char c = s[i];
@@ -163,8 +162,8 @@ void showData(string &address, int N, uint8_t * &data_memory,
       val |= (uint64_t)data_memory[addr + j] << (j * 8);
     }
     
-    cout << hex << uppercase << "0x" << setw(8) << setfill('0') 
-         << addr << "\t";
+    // cout << hex << uppercase << "0x" << setw(8) << setfill('0') 
+    //      << addr << "\t";
     cout << hex << uppercase << setw(16) << setfill('0') << val 
          << dec << setfill(' ') << endl;
 
