@@ -213,7 +213,7 @@ void execInstruction(unsigned int instruction, long long * &reg, uint8_t * &mem)
 
     case 0b0010011: // I-type ADDI
       if (funct3 == 0) 
-      {
+      { //ADDI
         if (rd == 0) 
         {
           cout << "ERROR: Cannot write to x0 (rd = 0)." << endl;
@@ -226,9 +226,14 @@ void execInstruction(unsigned int instruction, long long * &reg, uint8_t * &mem)
           usedRegs = {rd, rs1};
         }
       }
+      // need to add SLLI instruction
+      if (funct3 == 1 && funct7 == 0)
+      { // SLLI
+        
+      }
       break;
 
-      // need to add SLLI instruction
+      
 
     case 0b0000011: // I-type LD
       if (funct3 == 3) 
@@ -290,7 +295,7 @@ void execInstruction(unsigned int instruction, long long * &reg, uint8_t * &mem)
   {
     cout << "\n[Register Dump]\n";
     for (int r : usedRegs) {
-      if (r == 0) continue; // skip x0 (always zero)
+      if (r == 0) continue;
       cout << "x" << setw(2) << left << r
            << " = " << dec << reg[r]
            << "\t(0x" << hex << uppercase << reg[r] << ")\n";
