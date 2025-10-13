@@ -17,7 +17,8 @@ using namespace std;
 
 bool isValidHex(const string &s, int length)
 {
-  if((int)s.length() > length) return false;
+  if(s.empty() || (s.length()%2 != 0) || 
+     (int)s.length() > length) return false;
   for(int i=0; i<s.length(); i++)
   {
     char c = s[i];
@@ -27,9 +28,14 @@ bool isValidHex(const string &s, int length)
 }
 
 void loadData(const string &address, const string &filename, 
-              uint8_t * &data_memory)
+              uint8_t * &data_memory, const int memory_size)
 {
   unsigned long long addr = stoull(address, nullptr, 16);
+  if(addr >= memory_size)
+  {
+    cout << "\nERROR: Address exceeds memory size." << endl;
+    return;
+  }
   
   ifstream file(filename);
   if(!file.is_open())
@@ -61,6 +67,12 @@ void loadData(const string &address, const string &filename,
       break;
     }
 
+    if(addr+8 > memory_size)
+    {
+      cout << "\nERROR: Not enough space to store data." << endl;
+      break;
+    }
+
     unsigned long long value = stoull(hexStr, nullptr, 16);
     for(int i=0; i<8; i++)
     {
@@ -77,9 +89,14 @@ void loadData(const string &address, const string &filename,
 }
 
 void loadCode(const string &address, const string &filename, 
-              uint8_t * &instruction_memory)
+              uint8_t * &instruction_memory, const int memory_size)
 {
   unsigned long long addr = stoull(address, nullptr, 16);
+  if(addr >= memory_size)
+  {
+    cout << "\nERROR: Address exceeds memory size." << endl;
+    return;
+  }
 
   ifstream file(filename);
   if(!file.is_open())
@@ -104,10 +121,16 @@ void loadCode(const string &address, const string &filename,
       cout << "ERROR: File is empty." << endl;
       break;
     }
-    if(!isValidHex(hexStr, 16)) 
+    if(!isValidHex(hexStr, 8)) 
     {
       cout << "ERROR: File contains an invalid hex string length." 
            << endl;
+      break;
+    }
+
+    if(addr+4 > memory_size)
+    {
+      cout << "\nERROR: Not enough space to store data." << endl;
       break;
     }
 
@@ -126,9 +149,16 @@ void loadCode(const string &address, const string &filename,
        << setfill('0') << address << endl;
 }
 
-void showData(string &address, int N, uint8_t * &data_memory)
+void showData(string &address, int N, uint8_t * &data_memory,
+              const int memory_size)
 {
   unsigned long long addr = stoull(address, nullptr, 16);
+  if(addr >= memory_size)
+  {
+    cout << "\nERROR: Address exceeds memory size." << endl;
+    return;
+  }
+
   for(int i=0; i<N; i++)
   {
     uint64_t val = 0;
@@ -146,9 +176,16 @@ void showData(string &address, int N, uint8_t * &data_memory)
   }
 }
 
-void showCode(string &address, int N, uint8_t * &instruction_memory)
+void showCode(string &address, int N, uint8_t * &instruction_memory,
+              const int memory_size)
 {
   unsigned long long addr = stoull(address, nullptr, 16);
+  if(addr >= memory_size)
+  {
+    cout << "\nERROR: Address exceeds memory size." << endl;
+    return;
+  }
+  
   for(int i=0; i<N; i++)
   {
     uint64_t val = 0;
@@ -402,11 +439,11 @@ int main()
         {
           if(command == "LOADDATA") 
           {
-            loadData(address, filename, data_memory);
+            loadData(address, filename, data_memory, memory_size);
           }
           else if(command == "LOADCODE") 
           {
-            loadCode(address, filename, instruction_memory);
+            loadCode(address, filename, instruction_memory, memory_size);
           }
         }
       }
@@ -436,11 +473,11 @@ int main()
 
           if(command == "SHOWDATA") 
           {
-            showData(address, N, data_memory);
+            showData(address, N, data_memory, memory_size);
           }
           else if(command == "SHOWCODE") 
           {
-            showCode(address, N, instruction_memory);
+            showCode(address, N, instruction_memory, memory_size);
           }
         }
       }      
