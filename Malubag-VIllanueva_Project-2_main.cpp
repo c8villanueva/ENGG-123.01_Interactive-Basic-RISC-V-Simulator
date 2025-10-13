@@ -271,7 +271,15 @@ int execInstruction(unsigned int instruction, long long * &reg,
       { //ADDI
         if (rd == 0) 
         {
-          cout << "ERROR: Cannot write to x0 (rd = 0)." << endl;
+          if (!(opcode == 0b0010011 && funct3 == 0 && rs1 == 0 && immediate == 0)) 
+          {
+            cout << "ERROR: Cannot write to x0 (rd = 0)." << endl;
+          } 
+          else 
+          {
+            cout << "NOP (addi x0, x0, 0)" << endl;
+          }
+
         } 
         else 
         {
