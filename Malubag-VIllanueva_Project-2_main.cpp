@@ -226,10 +226,18 @@ void execInstruction(unsigned int instruction, long long * &reg,
               (((instruction >> 25) & 0x7F) << 5);
   if (imm_s & 0x800) imm_s |= 0xFFFFF000;
 
+  // B Format
+  int imm_b = (((instruction >> 8) & 0x0F)  << 1)  | 
+              (((instruction >> 25) & 0x3F) << 5)  | 
+              (((instruction >> 7) & 0x01)  << 11) | 
+              (((instruction >> 31) & 0x01) << 12);
+
   vector<unsigned int> usedRegs;
 
   switch (opcode) {
     case 0b0110011: // R-type ADD/SUB
+      cout << "-type (ADD/SUB) instruction detected.\n\n";
+
       if (funct3 == 0 && funct7 == 0x00) 
       { // ADD
         if (rd == 0) 
@@ -262,6 +270,8 @@ void execInstruction(unsigned int instruction, long long * &reg,
       break;
 
     case 0b0010011: // I-type ADDI
+      cout << "I-type (ADDI) instruction detected.\n\n";
+
       if (funct3 == 0) 
       { //ADDI
         if (rd == 0) 
@@ -283,9 +293,9 @@ void execInstruction(unsigned int instruction, long long * &reg,
       }
       break;
 
-      
-
     case 0b0000011: // I-type LD
+      cout << "I-type (LD) instruction detected.\n\n";
+
       if (funct3 == 3) 
       {
         if (rd == 0) 
@@ -309,6 +319,8 @@ void execInstruction(unsigned int instruction, long long * &reg,
       break;
 
     case 0b0100011: // S-type SD
+      cout << "S-type (SD) instruction detected.\n\n";
+
       if (funct3 == 3) 
       {
         if (rs2 == 0) 
@@ -331,8 +343,55 @@ void execInstruction(unsigned int instruction, long long * &reg,
       }
       break;
 
-      //case 0b0100011: // need to add BLT instruction
-      //break;
+     case 0b1100011: // B-type Branch instructions
+      cout << "B-type (Branch) instruction detected.\n\n";
+
+      if (funct3 == 0x1) // BLT (Branch if Less Than)
+      { 
+        bool takeBranch = ((long long)reg[rs1] < (long long)reg[rs2]);
+        cout << "blt x" << rs1 << ", x" << rs2 << ", " << dec << imm_b;
+        
+        if (takeBranch) 
+        {
+          cout << " Branch taken to 0x" << hex << uppercase << endl;
+        } 
+        else 
+        {
+          cout << "ERROR: Branch not taken." << endl;
+        }
+        usedRegs = {rs1, rs2};
+      }
+      else if (funct3 == 0x0) // BEQ (Branch if Equal)
+      { 
+        bool takeBranch = (reg[rs1] == reg[rs2]);
+        cout << "beq x" << rs1 << ", x" << rs2 << ", " << dec << imm_b;
+        
+        if (takeBranch) 
+        {
+          cout << " Branch taken to 0x" << hex << uppercase << endl;
+        } 
+        else 
+        {
+          cout << " ERROR: Branch not taken." << endl;
+        }
+        usedRegs = {rs1, rs2};
+      }
+      else if (funct3 == 0x5) // BGE (Branch if Greater or Equal)
+      { 
+        bool takeBranch = ((long long)reg[rs1] >= (long long)reg[rs2]);
+        cout << "bge x" << rs1 << ", x" << rs2 << ", " << dec << imm_b;
+        
+        if (takeBranch) 
+        {
+          cout << " Branch taken to 0x" << hex << uppercase << endl;
+        } 
+        else 
+        {
+          cout << " ERROR: Branch not taken." << endl;
+        }
+        usedRegs = {rs1, rs2};
+      }
+      break;
 
     default:
       cout << "Unsupported instruction.\n"
