@@ -270,7 +270,10 @@ int execInstruction(unsigned int instruction, long long * &reg,
       { //ADDI
         if (rd == 0) 
         {
-          if (!(opcode == 0b0010011 && funct3 == 0 && rs1 == 0 && immediate == 0)) 
+          if (!(opcode == 0b0010011 
+              && funct3 == 0 
+              && rs1 == 0 
+              && immediate == 0)) 
           {
             cout << "ERROR: Cannot write to x0 (rd = 0)." << endl;
           } 
@@ -325,7 +328,8 @@ int execInstruction(unsigned int instruction, long long * &reg,
                 << "(x" << rs1 << ")" << endl;
           usedRegs = {rd, rs1};
 
-          cout << "[DEBUG] mem_addr = 0x" << hex << mem_addr << dec << endl;
+          cout << "[DEBUG] mem_addr = 0x" << hex << mem_addr 
+               << dec << endl;
 
         }
       }
@@ -351,7 +355,8 @@ int execInstruction(unsigned int instruction, long long * &reg,
                 << "(x" << rs1 << ")" << endl;
           usedRegs = {rs1, rs2};
 
-          cout << "[DEBUG] mem_addr = 0x" << hex << mem_addr << dec << endl;
+          cout << "[DEBUG] mem_addr = 0x" << hex << mem_addr 
+               << dec << endl;
         }
       }
       break;
@@ -503,31 +508,39 @@ int main()
       {
         if(!isValidHex(address, 8))
         {
-          cout << "\nERROR: Please input an 8-bit hex value for <address>." << endl;
+          cout << endl
+          << "ERROR: Please input an 8-bit hex value for <address>."
+          << endl;
           continue;
         }
         else
         {
           if(command == "LOADDATA") 
           {
-            if (!loadData(address, filename, data_memory, memory_size))
-              cout << "\nERROR: Failed to load data from " << filename << endl;
+            if (!loadData(address, filename, 
+                          data_memory, memory_size))
+              cout << "\nERROR: Failed to load data from " 
+                   << filename << endl;
             else
             {
               cout << "\nData loaded successfully from " << filename 
-                   << " to address " << hex << uppercase << "0x" << setw(8) 
-                   << setfill('0') << address << endl;
+                   << " to address " << hex << uppercase 
+                   << "0x" << setw(8) << setfill('0') << address 
+                   << endl;
             }
           }
           else if(command == "LOADCODE") 
           {
-            if (!loadCode(address, filename, instruction_memory, memory_size))
-              cout << "\nERROR: Failed to load code from " << filename << endl;
+            if (!loadCode(address, filename, 
+                          instruction_memory, memory_size))
+              cout << "\nERROR: Failed to load code from " 
+                   << filename << endl;
             else
             {
-              cout << "\nInstructions loaded successfully from " << filename 
-                   << " to address " << hex << uppercase << "0x" << setw(8) 
-                   << setfill('0') << address << endl;
+              cout << "\nInstructions loaded successfully from " 
+                   << filename << " to address " << hex << uppercase 
+                   << "0x" << setw(8) << setfill('0') 
+                   << address << endl;
             }
           }
         }
@@ -539,14 +552,18 @@ int main()
       ss >> address >> N;
       if(address.empty() || N <= 0)
       {
-        cout << "\nERROR: Missing arguments. Type \"HELP\" to display all commands.\n";
+        cout << endl 
+             << "ERROR: Missing arguments." 
+             << " Type \"HELP\" to display all commands.\n";
         continue;
       }
       else
       {
         if(!isValidHex(address,8))
         {
-          cout << "\nERROR: Please input an 8-bit hex value for <address>." << endl;
+          cout << endl 
+               <<"ERROR: Please input an 8-bit hex value" 
+               << " for <address>." << endl;
           continue;
         }
         else
@@ -573,7 +590,9 @@ int main()
       ss >> address;
       if (address.empty()) 
       {
-        cout << "\nERROR: Missing <address> argument. Usage: EXEC <address>\n";
+        cout << endl 
+             << "ERROR: Missing <address> argument." 
+             << " Usage: EXEC <address>\n";
         continue;
       }
       if (!isValidHex(address, 8)) 
@@ -592,7 +611,9 @@ int main()
       {
         if (PC + 4 >= memory_size)
         {
-          cout << "\n[ERROR] Program counter out of bounds. Halting execution.\n";
+          cout << endl 
+               << "[ERROR] Program counter out of bounds." 
+               << " Halting execution.\n";
           break;
         }
 
@@ -610,7 +631,8 @@ int main()
         cout << "\nExecuting instruction at 0x" << hex << uppercase 
              << setw(8) << setfill('0') << PC << "...\n";
 
-        int pcOffset = execInstruction(instr, registers, data_memory);
+        int pcOffset = execInstruction(instr, registers, 
+                                       data_memory);
 
         PC += pcOffset; 
       }
