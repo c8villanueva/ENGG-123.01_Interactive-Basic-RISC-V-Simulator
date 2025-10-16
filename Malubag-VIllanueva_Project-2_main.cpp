@@ -488,10 +488,12 @@ int main()
            << " instructions from <filename> and stores to <address>"
            << "\n4. showcode <address> <N>        - displays <N>"
            << " instructions starting from <address>"
-           << "\n5. exec <address>                - simulates execution of"
-           << " codes starting from <address>"
-           << "\n6. help                          - displays this message"
-           << "\n7. exit                          - terminates the program"
+           << "\n5. exec <address>                - simulates"
+           << " execution of codes starting from <address>"
+           << "\n6. help                          - displays this"
+           << " message"
+           << "\n7. exit                          - terminates the"
+           << " program"
            << endl;
     }
 
