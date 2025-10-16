@@ -1,16 +1,19 @@
-40000513   # addi a0, zero, 0x400      # a0 = 0x400 (start address)
-00A00793   # addi a5, zero, 10         # a5 = 10 (N = 10)
-00000593   # addi a1, zero, 0          # a1 = 0 (inner = 0)
-00359693   # slli a3, a1, 3            # a3 = a1 * 8 (offset = inner * 8)
-00D506B3   # add  a3, a0, a3           # a3 = base + offset (address of arr[inner])
-0006B703   # ld   a4, 0(a3)            # a4 = arr[inner]
-0086B803   # ld   a6, 8(a3)            # a6 = arr[inner + 1]
-01074263   # blt  a4, a6, +0x14        # if (a4 < a6) skip swap
-00E6B423   # sd   a4, 8(a3)            # arr[inner + 1] = a4
-0106B023   # sd   a6, 0(a3)            # arr[inner] = a6
-00158593   # addi a1, a1, 1            # inner++
-FFF78713   # addi a4, a5, -1           # a4 = N - 1
-FD079EE3   # bne  a5, a1, -0x20        # if inner != N - 1, jump back to inner loop
-FFF78793   # addi a5, a5, -1           # a5 = a5 - 1 (N--)
-FE079EE3   # bne  a5, zero, -0x20      # if N != 0, jump back to outer loop
-0000006F   # jal  zero, 0              # infinite loop (halt)
+44000513   # addi a0, zero, 0x440
+05000593   # addi a1, zero, 80
+00B50533   # add  a0, a0, a1       # a0 = 0x490
+00A00613   # addi a2, zero, 10     # a2 = N = 10
+00000593   # addi a1, zero, 0      # inner = 0
+00359693   # slli a3, a1, 3        # offset = inner * 8
+00D506B3   # add  a3, a0, a3       # a3 = base + offset
+0006B703   # ld   a4, 0(a3)        # arr[inner]
+0086B783   # ld   a5, 8(a3)        # arr[inner+1]
+00A7C263   # blt  a5, a4, swap     # if arr[i+1] < arr[i], swap
+00158593   # addi a1, a1, 1        # inner++
+00C00713   # addi a4, zero, 12     # a4 = N - 1 (for compare)
+FEA59AE3   # bne  a1, a4, inner_loop
+FFF60613   # addi a2, a2, -1       # N--
+FE061AE3   # bne  a2, zero, outer_loop
+0000006F   # jal zero, 0           # halt
+00A6B423   # sd   a5, 0(a3)
+00E6B823   # sd   a4, 8(a3)
+0000006F   # JAL zero, skip_swap

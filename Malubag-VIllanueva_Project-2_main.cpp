@@ -325,7 +325,8 @@ int execInstruction(unsigned int instruction, long long * &reg,
                 << "(x" << rs1 << ")" << endl;
           usedRegs = {rd, rs1};
 
-          cout << "[DEBUG] mem_addr = 0x" << hex << mem_addr << dec << endl;
+          cout << "[DEBUG] Stored value " << hex << reg[rs2] 
+               << " at address 0x" << mem_addr << endl;
 
         }
       }
@@ -351,7 +352,9 @@ int execInstruction(unsigned int instruction, long long * &reg,
                 << "(x" << rs1 << ")" << endl;
           usedRegs = {rs1, rs2};
 
-          cout << "[DEBUG] mem_addr = 0x" << hex << mem_addr << dec << endl;
+          cout << "[DEBUG] Stored value " << hex << reg[rs2] 
+               << " at address 0x" << mem_addr << endl;
+
         }
       }
       break;
