@@ -479,7 +479,6 @@ int main()
 
     else if(command == "HELP")
     {
-      // some of these lines go over 70 chars teka
       cout << "\n1. loaddata <address> <filename> - obtains 64-bit"
            << " data from <filename> and stores to <address>"
            << "\n2. showdata <address> <N>        - displays <N>"
