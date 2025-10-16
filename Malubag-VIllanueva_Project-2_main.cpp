@@ -161,8 +161,6 @@ void showData(string &address, int N, uint8_t * &data_memory,
     {
       val |= ((uint64_t)data_memory[addr + j]) << (j * 8);
     }
-
-
     
     cout << hex << uppercase << "0x" << setw(8) << setfill('0') 
          << addr << "\t";
@@ -336,13 +334,13 @@ int execInstruction(unsigned int instruction, long long * &reg,
     case 0b0100011: // S-type SD
       if (funct3 == 3) 
       {
-        if (rs2 == 0) 
-        {
-          cout << "\nERROR: Cannot store from x0 (rs2 = 0)." 
-                << endl; 
-        } 
-        else 
-        {
+        // if (rs2 == 0) 
+        // {
+        //   cout << "\nERROR: Cannot store from x0 (rs2 = 0)." 
+        //         << endl; 
+        // } 
+        // else 
+        // {
           uint64_t mem_addr = reg[rs1] + imm_s;
           uint64_t val = reg[rs2];
           for (int i = 0; i < 8; i++) 
@@ -354,12 +352,12 @@ int execInstruction(unsigned int instruction, long long * &reg,
           usedRegs = {rs1, rs2};
 
           cout << "[DEBUG] mem_addr = 0x" << hex << mem_addr << dec << endl;
-        }
+        // }
       }
       break;
 
      case 0b1100011: // B-type Branch instructions
-      if (funct3 == 0x1) 
+      if (funct3 == 0x4) 
         { // BLT 
           if ((long long)reg[rs1] < (long long)reg[rs2]) 
           {
@@ -400,6 +398,36 @@ int execInstruction(unsigned int instruction, long long * &reg,
           else 
           {
             cout << "bge x" << rs1 << ", x" << rs2 << ", " 
+                 << imm_b << " (branch not taken)" << endl;
+          }
+          usedRegs = {rs1, rs2};
+        }
+        else if (funct3 == 0x0) 
+        { // BEQ
+          if (reg[rs1] == reg[rs2]) 
+          {
+            cout << "beq x" << rs1 << ", x" << rs2 << ", " 
+                 << imm_b << " (branch taken)" << endl;
+            pcOffset = imm_b;
+          } 
+          else 
+          {
+            cout << "beq x" << rs1 << ", x" << rs2 << ", " 
+                 << imm_b << " (branch not taken)" << endl;
+          }
+          usedRegs = {rs1, rs2};
+        }
+        else if (funct3 == 0x1) 
+        { // BNE
+          if (reg[rs1] != reg[rs2]) 
+          {
+            cout << "bne x" << rs1 << ", x" << rs2 << ", " 
+                 << imm_b << " (branch taken)" << endl;
+            pcOffset = imm_b;
+          } 
+          else 
+          {
+            cout << "bne x" << rs1 << ", x" << rs2 << ", " 
                  << imm_b << " (branch not taken)" << endl;
           }
           usedRegs = {rs1, rs2};
